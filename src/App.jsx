@@ -1,38 +1,88 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { Loader2 } from 'lucide-react';
+import { 
+  Card,
+  CardContent,
+} from '@/components/ui/card';
 import LoginRegisterPage from './pages/LoginRegisterPage';
-import './App.css';
 import HomePage from './pages/HomePage';
 
-// Protected Route Component
+// Loading Spinner Component
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <Card className="w-full max-w-md p-6">
+      <CardContent className="flex flex-col items-center space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardContent className="flex flex-col items-center space-y-4 p-6">
+              <h2 className="text-xl font-semibold text-destructive">Something went wrong</h2>
+              <p className="text-sm text-muted-foreground text-center">
+                Please try refreshing the page or contact support if the problem persists.
+              </p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              >
+                Refresh Page
+              </button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Protected Route Component with enhanced loading state
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
-  // Show loading state while checking authentication
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
-  // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
-  // Render children if authenticated
   return children;
 };
 
-// Public Route Component (redirects to home if already authenticated)
+// Public Route Component with enhanced loading state
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   if (user) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -41,39 +91,56 @@ const PublicRoute = ({ children }) => {
 const App = () => {
   return (
     <Router>
-      <AuthProvider>
-        <Routes>
-          {/* Protected Routes */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            }
-          />
+      <ErrorBoundary>
+        <AuthProvider>
+          <div className="min-h-screen bg-background">
+            <Routes>
+              {/* Protected Routes */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <HomePage />
+                  </ProtectedRoute>
+                }
+              />
 
-          {/* Public Routes */}
-          <Route
-            path="/login/*"
-            element={
-              <PublicRoute>
-                <LoginRegisterPage />
-              </PublicRoute>
-            }
-          />
+              {/* Public Routes */}
+              <Route
+                path="/login/*"
+                element={
+                  <PublicRoute>
+                    <LoginRegisterPage />
+                  </PublicRoute>
+                }
+              />
 
-          {/* Catch all route - redirect to home or login based on auth status */}
-          <Route
-            path="*"
-            element={
-              <ProtectedRoute>
-                <Navigate to="/" replace />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </AuthProvider>
+              {/* 404 Route with enhanced UI */}
+              <Route
+                path="*"
+                element={
+                  <div className="min-h-screen flex items-center justify-center p-4">
+                    <Card className="w-full max-w-md">
+                      <CardContent className="flex flex-col items-center space-y-4 p-6">
+                        <h2 className="text-2xl font-bold">404 - Page Not Found</h2>
+                        <p className="text-sm text-muted-foreground text-center">
+                          The page you are looking for doesnot exist or has been moved.
+                        </p>
+                        <button 
+                          onClick={() => window.location.href = '/'}
+                          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                        >
+                          Go to Home
+                        </button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                }
+              />
+            </Routes>
+          </div>
+        </AuthProvider>
+      </ErrorBoundary>
     </Router>
   );
 };
@@ -84,6 +151,10 @@ ProtectedRoute.propTypes = {
 };
 
 PublicRoute.propTypes = {
+  children: PropTypes.node.isRequired
+};
+
+ErrorBoundary.propTypes = {
   children: PropTypes.node.isRequired
 };
 
