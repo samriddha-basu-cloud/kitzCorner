@@ -4,6 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Mail, Lock, Loader2, LogIn } from 'lucide-react';
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -52,62 +57,114 @@ const Login = () => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <Input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={loading}
-        >
-          {loading ? 'Signing In...' : 'Sign In'}
-        </Button>
-        <div className="text-center mt-4 space-y-2">
-          <button
-            type="button"
-            onClick={() => navigate('/login/forgot-password')}
-            className="text-blue-600 hover:text-blue-800 block w-full"
+    <Card className="w-full max-w-md mx-auto border-gray-100 dark:border-gray-800 shadow-md bg-[#111827] text-gray-100">
+      <CardHeader className="space-y-1">
+        
+        <CardTitle className="text-2xl font-semibold tracking-tight">
+          Sign in
+        </CardTitle>
+        <CardDescription>
+          Enter your credentials to access your account
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 h-4 w-4" />
+              <Input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="name@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                className="pl-10 bg-[#111827] text-white border-gray-600"
+                required
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Button
+                variant="link"
+                className="p-0 h-auto text-sm font-medium text-white"
+                onClick={() => navigate('/login/forgot-password')}
+              >
+                Forgot password?
+              </Button>
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 h-4 w-4" />
+              <Input
+                id="password"
+                type="password"
+                name="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
+                className="pl-10 bg-[#111827] text-white border-gray-600"
+                required
+              />
+            </div>
+          </div>
+          
+          <Button
+            type="submit"
+            className="w-full bg-[#18284a] hover:bg-[#1f3460] text-white border-gray-400"
+            disabled={loading}
           >
-            Forgot Password?
-          </button>
-          <p className="text-gray-600">
-            New here?{' '}
-            <button
-              type="button"
-              onClick={() => navigate('/login/register')}
-              className="text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Register here
-            </button>
-          </p>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in
+              </>
+            ) : (
+              <>
+                <LogIn className="mr-2 h-4 w-4" />
+                Sign in
+              </>
+            )}
+          </Button>
+        </form>
+      </CardContent>
+      
+      <div className="px-6 pb-2">
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <Separator className="bg-gray-600" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-[#111827] px-2 text-white">
+              Or continue with
+            </span>
+          </div>
         </div>
-      </form>
-    </div>
+      </div>
+      
+      <CardFooter className="flex flex-col pt-4">
+        <div className="text-center text-sm mt-2">
+          Do not have an account?{' '}
+          <Button
+            variant="link"
+            className="p-0 h-auto text-sm font-medium text-white"
+            onClick={() => navigate('/login/register')}
+          >
+            Create an account
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
   );
 };
 

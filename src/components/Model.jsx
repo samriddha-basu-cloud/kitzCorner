@@ -1,4 +1,4 @@
-import React from "react";
+// import React from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Scene from "./Scene";
@@ -30,12 +30,12 @@ export default function Model() {
           id="welcome"
           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0 tracking-[50px]
                      text-center text-[150px] font-bold text-white "
-          // style={{
-          //   WebkitTextStroke: "2px rgba(255,255,255,0.1)",
-          //   textShadow: "0 0 30px rgba(255,255,255,0.1)",
-          // }}
+          style={{
+            textShadow:
+              "0 0 6px #66ccff, 0 0 20px #66ccff, 0 0 30px #66ccff, 0 0 40px #0099ff, 0 0 70px #0099ff",
+          }}
         >
-          Welcome
+          Amigos
         </div>
 
         {/* Model container with higher z-index */}
