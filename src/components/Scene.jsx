@@ -1,28 +1,3 @@
-// import React, { Suspense } from "react";
-// import { Canvas } from "@react-three/fiber";
-// import { useGLTF, OrbitControls, Environment } from "@react-three/drei";
-
-// function Model({ modelPath }) {
-//   const { scene } = useGLTF("/public/model/sample (36).glb");
-//   return <primitive object={scene} scale={1} />;
-// }
-
-// export default function Scene() {
-//   return (
-//     <div style={{ width: "100%", height: "800px" }}>
-//       <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-//         <Suspense fallback={null}>
-//           <Model modelPath="/public/model/sample (36).glb" />
-//           <Environment preset="sunset" />
-//           <OrbitControls />
-//         </Suspense>
-//         <ambientLight intensity={0.5} />
-//         <directionalLight position={[10, 10, 5]} intensity={1} />
-//       </Canvas>
-//     </div>
-//   );
-// }
-
 import React, { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Environment } from "@react-three/drei";
@@ -52,20 +27,25 @@ function Model({ modelPath }) {
   });
 
   const { scene } = useGLTF("/public/model/sample (36).glb");
-  return <primitive ref={modelRef} object={scene} scale={1} />;
+  return (
+    <primitive
+      ref={modelRef}
+      object={scene}
+      scale={1.5}
+      position={[0, -1, 0]}
+    />
+  );
 }
 
 export default function Scene() {
   return (
-    <section className="w-full h-[80vh] relative">
-      {" "}
-      {/* Adjust height and margins as needed */}
+    <section className="w-full h-full absolute top-0 left-0">
       <div className="w-full h-full">
         <Canvas
           camera={{
             position: [0, 0, 5],
             fov: 45,
-            near: 0.5,
+            near: 0.1,
             far: 5000,
           }}
           style={{ touchAction: "none" }}
@@ -75,8 +55,8 @@ export default function Scene() {
             <Model modelPath="/public/model/sample (36).glb" />
             <Environment preset="sunset" />
           </Suspense>
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[10, 10, 5]} intensity={1} />
+          <ambientLight intensity={0.7} />
+          <directionalLight position={[10, 10, 5]} intensity={1.5} />
         </Canvas>
       </div>
     </section>

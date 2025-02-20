@@ -9,29 +9,38 @@ export default function Model() {
       "#welcome",
       {
         opacity: 0,
-        y: 30,
+        scale: 0.8,
+        y: 50,
       },
       {
-        opacity: 1,
+        opacity: 0.5,
+        scale: 1.3,
         y: 0,
         duration: 2,
-        // scale: 1.4,
         ease: "power3.out",
       }
     );
   }, []);
 
   return (
-    <section className="mt-10 pt-20 bg-[#111827] h-screen overflow-hidden">
+    <section className="mt-2 pt-2 bg-[#111827] h-screen overflow-hidden relative">
       <div className="screen-max-width">
+        {/* Welcome text positioned behind model */}
         <div
           id="welcome"
-          className="screen-max-width text-center text-6xl font-bold text-white"
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0 tracking-[50px]
+                     text-center text-[150px] font-bold text-white "
+          // style={{
+          //   WebkitTextStroke: "2px rgba(255,255,255,0.1)",
+          //   textShadow: "0 0 30px rgba(255,255,255,0.1)",
+          // }}
         >
           Welcome
         </div>
-        <div className="flex flex-col items-center">
-          <div className="w-full h-[75vh] overflow-hidden relative ">
+
+        {/* Model container with higher z-index */}
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="w-full h-[75vh] overflow-visible">
             <Scene />
           </div>
         </div>
