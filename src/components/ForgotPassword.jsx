@@ -1,32 +1,73 @@
-// components/ForgotPassword.jsx
-import { useState } from "react";
-import { auth } from "../firebase/config";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+  const { resetPassword } = useAuth();
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setMessage('');
+
     try {
-      await sendPasswordResetEmail(auth, email);
-      setMessage("Password reset link sent.");
-    } catch (err) {
-      console.error(err);
-      setMessage("Error sending reset email.");
+      setLoading(true);
+      await resetPassword(email);
+      setMessage('Check your inbox for password reset instructions');
+    } catch {
+      setError('Failed to reset password. Please check your email.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl mb-4">Reset Password</h2>
-      {message && <p className="text-green-500">{message}</p>}
+    <div className="w-full max-w-md mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-6 text-center">Reset Password</h2>
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {message && (
+        <Alert className="mb-4">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input type="email" placeholder="Email" onChange={(e) => setEmail(e.target.value)} required />
-        <Button type="submit">Send Reset Link</Button>
+        <div>
+          <Input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={loading}
+        >
+          {loading ? 'Sending...' : 'Reset Password'}
+        </Button>
+        <div className="text-center mt-4">
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Back to Login
+          </button>
+        </div>
       </form>
     </div>
   );

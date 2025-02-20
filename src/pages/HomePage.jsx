@@ -1,7 +1,11 @@
+import Navbar from "../components/Navbar";
+import Model from "../components/Model";
 
-
-export const HomePage = () => {
+export default function HomePage() {
   return (
-    <div>HomePage</div>
-  )
+    <div>
+      <Navbar />
+      <Model />
+    </div>
+  );
 }
