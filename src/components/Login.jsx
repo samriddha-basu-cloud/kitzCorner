@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Mail, Lock, Loader2, LogIn } from 'lucide-react';
 
-
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -59,7 +58,6 @@ const Login = () => {
   return (
     <Card className="w-full max-w-md mx-auto border-gray-100 dark:border-gray-800 shadow-md bg-[#111827] text-gray-100">
       <CardHeader className="space-y-1">
-        
         <CardTitle className="text-2xl font-semibold tracking-tight">
           Sign in
         </CardTitle>
@@ -97,6 +95,7 @@ const Login = () => {
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
               <Button
+                type="button"
                 variant="link"
                 className="p-0 h-auto text-sm font-medium text-white"
                 onClick={() => navigate('/login/forgot-password')}
