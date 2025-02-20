@@ -29,7 +29,7 @@ export default function Model() {
         <div
           id="welcome"
           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0 tracking-[50px]
-                     text-center text-[150px] font-bold text-white "
+                     text-center text-[150px] font-bold text-[#fff] "
           style={{
             textShadow:
               "0 0 6px #66ccff, 0 0 20px #66ccff, 0 0 30px #66ccff, 0 0 40px #0099ff, 0 0 70px #0099ff",
