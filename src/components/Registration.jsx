@@ -281,7 +281,7 @@ const Registration = () => {
     
             <Button 
               type="submit" 
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 mt-2" 
+              className="w-full bg-[#18284a] hover:bg-[#1f3460] text-white font-medium py-2 mt-2" 
               disabled={loading}
             >
               {loading ? (
@@ -301,7 +301,7 @@ const Registration = () => {
             Already have an account?{" "}
             <button
               onClick={() => navigate("/login")}
-              className="text-indigo-400 hover:text-indigo-300 font-medium"
+              className="text-gray-100 hover:text-indigo-300 font-medium"
             >
               Login here
             </button>

@@ -25,7 +25,7 @@ const LoginRegisterPage = () => {
               <img 
                 src={Logo} 
                 alt="Kitzcorner" 
-                className="relative h-24 w-24 object-contain drop-shadow-lg" 
+                className="relative h-40 w-40 object-contain drop-shadow-lg" 
               />
             </div>
           </div>

@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Mail } from 'lucide-react';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -30,8 +32,8 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6 text-center">Reset Password</h2>
+    <div className="w-full max-w-md mx-auto p-6 border border-gray-300 rounded-lg">
+      <h2 className="text-2xl text-gray-100 font-bold mb-6 text-center">Reset Password</h2>
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertDescription>{error}</AlertDescription>
@@ -44,14 +46,24 @@ const ForgotPassword = () => {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
         </div>
+            <div className="space-y-2">
+            <Label htmlFor="email" className="text-white">Email</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 h-4 w-4" />
+              <Input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="pl-10 bg-[#111827] text-white border-gray-600"
+
+              />
+            </div>
+          </div>
         <Button
           type="submit"
           className="w-full"
@@ -63,7 +75,7 @@ const ForgotPassword = () => {
           <button
             type="button"
             onClick={() => navigate('/login')}
-            className="text-blue-600 hover:text-blue-800"
+            className="text-[#007BFF] hover:text-blue-800"
           >
             Back to Login
           </button>
