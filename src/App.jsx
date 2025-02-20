@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/card';
 import LoginRegisterPage from './pages/LoginRegisterPage';
 import HomePage from './pages/HomePage';
+import Footer from '../src/components/Footer';
 
 // Loading Spinner Component
 const LoadingSpinner = () => (
@@ -88,56 +89,67 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+const AppContent = () => {
+  const location = useLocation();
+
+  return (
+    <>
+      <Routes>
+        {/* Protected Routes */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Public Routes */}
+        <Route
+          path="/login/*"
+          element={
+            <PublicRoute>
+              <LoginRegisterPage />
+            </PublicRoute>
+          }
+        />
+
+        {/* 404 Route with enhanced UI */}
+        <Route
+          path="*"
+          element={
+            <div className="min-h-screen flex items-center justify-center p-4">
+              <Card className="w-full max-w-md">
+                <CardContent className="flex flex-col items-center space-y-4 p-6">
+                  <h2 className="text-2xl font-bold">404 - Page Not Found</h2>
+                  <p className="text-sm text-muted-foreground text-center">
+                    The page you are looking for does not exist or has been moved.
+                  </p>
+                  <button 
+                    onClick={() => window.location.href = '/'}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                  >
+                    Go to Home
+                  </button>
+                </CardContent>
+              </Card>
+            </div>
+          }
+        />
+      </Routes>
+      {location.pathname !== '/login' && <Footer />}
+    </>
+  );
+};
+
 const App = () => {
   return (
     <Router>
       <ErrorBoundary>
         <AuthProvider>
           <div className="min-h-screen bg-background">
-            <Routes>
-              {/* Protected Routes */}
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <HomePage />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Public Routes */}
-              <Route
-                path="/login/*"
-                element={
-                  <PublicRoute>
-                    <LoginRegisterPage />
-                  </PublicRoute>
-                }
-              />
-
-              {/* 404 Route with enhanced UI */}
-              <Route
-                path="*"
-                element={
-                  <div className="min-h-screen flex items-center justify-center p-4">
-                    <Card className="w-full max-w-md">
-                      <CardContent className="flex flex-col items-center space-y-4 p-6">
-                        <h2 className="text-2xl font-bold">404 - Page Not Found</h2>
-                        <p className="text-sm text-muted-foreground text-center">
-                          The page you are looking for doesnot exist or has been moved.
-                        </p>
-                        <button 
-                          onClick={() => window.location.href = '/'}
-                          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                        >
-                          Go to Home
-                        </button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                }
-              />
-            </Routes>
+            <AppContent />
           </div>
         </AuthProvider>
       </ErrorBoundary>
