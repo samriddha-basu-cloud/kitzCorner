@@ -26,7 +26,8 @@ function Model({ modelPath }) {
     );
   });
 
-  const { scene } = useGLTF("/public/model/cute.glb");
+  const { scene } = useGLTF(modelPath);
+
   return (
     <primitive
       ref={modelRef}
@@ -52,7 +53,7 @@ export default function Scene() {
           preserveDrawingBuffer={true}
         >
           <Suspense fallback={null}>
-            <Model modelPath="/public/model/cute.glb" />
+            <Model modelPath="/model/cute.glb" />
             <Environment preset="sunset" />
           </Suspense>
           <ambientLight intensity={0.7} />
