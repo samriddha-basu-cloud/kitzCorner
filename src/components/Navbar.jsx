@@ -7,7 +7,7 @@ import { Menu, X } from "lucide-react";
 const Navbar = () => {
   const [active, setActive] = useState("Home");
   const [isOpen, setIsOpen] = useState(false);
-  const navItems = ["Home", "Contacts", "Products"];
+  const navItems = ["Home", "Products", "Cart"];
   const { logout } = useAuth();
   const navigate = useNavigate();
 

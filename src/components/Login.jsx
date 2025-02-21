@@ -26,13 +26,16 @@ const Login = () => {
     try {
       setLoading(true);
       const userCredential = await login(formData.email, formData.password);
-      
+
       if (!userCredential.user.emailVerified) {
         await userCredential.user.sendEmailVerification();
         setError('Please verify your email first. A new verification email has been sent.');
         return;
       }
-      
+
+      // Store customerId in local storage
+      localStorage.setItem("customerId", userCredential.user.uid);
+
       navigate('/');
     } catch (error) {
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
@@ -65,14 +68,14 @@ const Login = () => {
           Enter your credentials to access your account
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent>
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -90,7 +93,7 @@ const Login = () => {
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
@@ -117,7 +120,7 @@ const Login = () => {
               />
             </div>
           </div>
-          
+
           <Button
             type="submit"
             className="w-full bg-[#18284a] hover:bg-[#1f3460] text-white border-gray-400"
@@ -137,7 +140,7 @@ const Login = () => {
           </Button>
         </form>
       </CardContent>
-      
+
       <div className="px-6 pb-2">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -150,7 +153,7 @@ const Login = () => {
           </div>
         </div>
       </div>
-      
+
       <CardFooter className="flex flex-col pt-4">
         <div className="text-center text-sm mt-2">
           Do not have an account?{' '}

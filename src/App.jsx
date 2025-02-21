@@ -11,7 +11,7 @@ import LoginRegisterPage from './pages/LoginRegisterPage';
 import HomePage from './pages/HomePage';
 import Footer from '../src/components/Footer';
 import ProductsPage from "./pages/ProductsPage";
-import ProductPage from "./pages/ProductPage";
+import ProductDetailsPage from "./pages/ProductDetailsPage";
 
 // Loading Spinner Component
 const LoadingSpinner = () => (
@@ -121,7 +121,7 @@ const AppContent = () => {
           path="/product/:productId"
           element={
             <ProtectedRoute>
-              <ProductPage />
+              <ProductDetailsPage />
             </ProtectedRoute>
           }
         />

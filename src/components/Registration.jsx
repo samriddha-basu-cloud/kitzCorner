@@ -36,7 +36,7 @@ const Registration = () => {
   const validateIndianPhoneNumber = (phone) => {
     // Strip any non-numeric characters
     const cleanPhone = phone.replace(/\D/g, '');
-    
+
     // Check if it's a valid Indian number (10 digits, optionally with +91 prefix)
     if (/^(\+?91)?[6789]\d{9}$/.test(cleanPhone)) {
       // Format as E.164 (ensure it has +91 prefix)
@@ -107,8 +107,11 @@ const Registration = () => {
         phone: formattedPhone
       });
 
+      // Store customerId in local storage
+      localStorage.setItem("customerId", userCredential.user.uid);
+
       setSuccess("Registration successful! Please check your email to verify your account.");
-      
+
       // Clear form
       setFormData({
         username: "",
@@ -120,7 +123,7 @@ const Registration = () => {
 
       // Optionally redirect user
       setTimeout(() => navigate("/login"), 3000);
-      
+
     } catch (error) {
       console.error("Registration error:", error);
       if (error.code === "auth/email-already-in-use") {
@@ -160,20 +163,20 @@ const Registration = () => {
             Join us to access all features
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="pt-6 pb-2">
           {error && (
             <Alert variant="destructive" className="mb-4 border-red-800 bg-red-900/30 text-red-200">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-    
+
           {success && (
             <Alert className="mb-4 border-green-800 bg-green-900/30 text-green-200">
               <AlertDescription>{success}</AlertDescription>
             </Alert>
           )}
-    
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username" className="text-sm font-medium text-gray-300">
@@ -190,13 +193,13 @@ const Registration = () => {
                 className="border-gray-600 bg-gray-800/50 text-gray-100 placeholder:text-gray-500 focus:ring-gray-500 focus:border-gray-500"
               />
             </div>
-    
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-300">
                 Email
               </Label>
               <Input
-                id="email" 
+                id="email"
                 type="email"
                 name="email"
                 placeholder="your.email@example.com"
@@ -206,7 +209,7 @@ const Registration = () => {
                 className="border-gray-600 bg-gray-800/50 text-gray-100 placeholder:text-gray-500 focus:ring-gray-500 focus:border-gray-500"
               />
             </div>
-    
+
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-sm font-medium text-gray-300">
                 Phone Number
@@ -225,7 +228,7 @@ const Registration = () => {
                 Indian format required (+91XXXXXXXXXX)
               </p>
             </div>
-    
+
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium text-gray-300">
                 Password
@@ -241,7 +244,7 @@ const Registration = () => {
                   required
                   className="border-gray-600 bg-gray-800/50 text-gray-100 pr-10 placeholder:text-gray-500 focus:ring-gray-500 focus:border-gray-500"
                 />
-                <button 
+                <button
                   type="button"
                   onClick={togglePasswordVisibility}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-300"
@@ -253,7 +256,7 @@ const Registration = () => {
                 Must contain uppercase, lowercase, number, and special character (min. 8 characters)
               </p>
             </div>
-    
+
             <div className="space-y-2">
               <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-300">
                 Confirm Password
@@ -269,7 +272,7 @@ const Registration = () => {
                   required
                   className="border-gray-600 bg-gray-800/50 text-gray-100 pr-10 placeholder:text-gray-500 focus:ring-gray-500 focus:border-gray-500"
                 />
-                <button 
+                <button
                   type="button"
                   onClick={toggleConfirmPasswordVisibility}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-300"
@@ -278,10 +281,10 @@ const Registration = () => {
                 </button>
               </div>
             </div>
-    
-            <Button 
-              type="submit" 
-              className="w-full bg-[#18284a] hover:bg-[#1f3460] text-white font-medium py-2 mt-2" 
+
+            <Button
+              type="submit"
+              className="w-full bg-[#18284a] hover:bg-[#1f3460] text-white font-medium py-2 mt-2"
               disabled={loading}
             >
               {loading ? (
@@ -295,7 +298,7 @@ const Registration = () => {
             </Button>
           </form>
         </CardContent>
-    
+
         <CardFooter className="flex justify-center pt-2 pb-6 border-t border-gray-700 mt-4">
           <p className="text-sm text-gray-300">
             Already have an account?{" "}

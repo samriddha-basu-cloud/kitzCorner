@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
@@ -201,9 +201,11 @@ CategoryToggle.propTypes = {
 
 ProductCard.propTypes = {
   product: PropTypes.shape({
+    id: PropTypes.string.isRequired,
     images: PropTypes.arrayOf(PropTypes.string).isRequired,
     title: PropTypes.string.isRequired,
     price: PropTypes.number.isRequired,
+    discount: PropTypes.number.isRequired,
     description: PropTypes.string.isRequired,
   }).isRequired,
   index: PropTypes.number.isRequired,
