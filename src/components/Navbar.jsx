@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
@@ -10,6 +10,17 @@ const Navbar = () => {
   const navItems = ["Home", "Products", "Cart", "Profile"];
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Set the active nav item based on the current path
+    const path = location.pathname.split("/")[1];
+    if (navItems.includes(path)) {
+      setActive(path);
+    } else {
+      setActive("Home");
+    }
+  }, [location]);
 
   const handleLogout = async () => {
     await logout();
@@ -19,6 +30,7 @@ const Navbar = () => {
   const handleItemClick = (item) => {
     setActive(item);
     setIsOpen(false);
+    navigate(`/${item}`);
   };
 
   return (
@@ -32,10 +44,7 @@ const Navbar = () => {
             <motion.li
               key={item}
               className="relative cursor-pointer text-lg font-medium px-4 py-2"
-              onClick={() => {
-                setActive(item);
-                navigate(`/${item}`);
-              }}
+              onClick={() => handleItemClick(item)}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.1 }}

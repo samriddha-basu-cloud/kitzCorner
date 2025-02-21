@@ -3,16 +3,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import PropTypes from 'prop-types';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
-import { 
-  Card,
-  CardContent,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import LoginRegisterPage from './pages/LoginRegisterPage';
 import HomePage from './pages/HomePage';
 import Footer from '../src/components/Footer';
 import ProductsPage from "./pages/ProductsPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import CartPage from "./pages/CartPage";
+import Navbar from './components/Navbar'; // Import the Navbar component
 
 // Loading Spinner Component
 const LoadingSpinner = () => (
@@ -100,6 +98,7 @@ const AppContent = () => {
 
   return (
     <>
+      <Navbar /> {/* Include the Navbar component */}
       <Routes>
         {/* Protected Routes */}
         <Route
@@ -126,7 +125,6 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/products"
           element={
@@ -135,7 +133,6 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/cart"
           element={
