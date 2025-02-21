@@ -25,14 +25,17 @@ const Navbar = () => {
     <nav className="w-full bg-gray-900 text-white p-4 shadow-lg fixed top-0 z-50">
       <div className="max-w-6xl mx-auto flex justify-between items-center">
         <h1 className="text-2xl font-bold tracking-wide">SB</h1>
-        
+
         {/* Desktop Navigation */}
         <ul className="hidden md:flex space-x-6">
           {navItems.map((item) => (
             <motion.li
               key={item}
               className="relative cursor-pointer text-lg font-medium px-4 py-2"
-              onClick={() => setActive(item)}
+              onClick={() => {
+                setActive(item);
+                navigate(`/${item}`);
+              }}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.1 }}

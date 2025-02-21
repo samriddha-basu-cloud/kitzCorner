@@ -10,6 +10,7 @@ import {
 import LoginRegisterPage from './pages/LoginRegisterPage';
 import HomePage from './pages/HomePage';
 import Footer from '../src/components/Footer';
+import ProductsPage from "./pages/ProductsPage";
 
 // Loading Spinner Component
 const LoadingSpinner = () => (
@@ -40,11 +41,14 @@ class ErrorBoundary extends React.Component {
         <div className="min-h-screen flex items-center justify-center p-4">
           <Card className="w-full max-w-md">
             <CardContent className="flex flex-col items-center space-y-4 p-6">
-              <h2 className="text-xl font-semibold text-destructive">Something went wrong</h2>
+              <h2 className="text-xl font-semibold text-destructive">
+                Something went wrong
+              </h2>
               <p className="text-sm text-muted-foreground text-center">
-                Please try refreshing the page or contact support if the problem persists.
+                Please try refreshing the page or contact support if the problem
+                persists.
               </p>
-              <button 
+              <button
                 onClick={() => window.location.reload()}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
               >
@@ -104,6 +108,22 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/Home"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/Products"
+          element={
+            <ProtectedRoute>
+              <ProductsPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Public Routes */}
         <Route
@@ -124,10 +144,11 @@ const AppContent = () => {
                 <CardContent className="flex flex-col items-center space-y-4 p-6">
                   <h2 className="text-2xl font-bold">404 - Page Not Found</h2>
                   <p className="text-sm text-muted-foreground text-center">
-                    The page you are looking for does not exist or has been moved.
+                    The page you are looking for does not exist or has been
+                    moved.
                   </p>
-                  <button 
-                    onClick={() => window.location.href = '/'}
+                  <button
+                    onClick={() => (window.location.href = "/")}
                     className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                   >
                     Go to Home
@@ -138,7 +159,7 @@ const AppContent = () => {
           }
         />
       </Routes>
-      {location.pathname !== '/login' && <Footer />}
+      {location.pathname !== "/login" && <Footer />}
     </>
   );
 };
