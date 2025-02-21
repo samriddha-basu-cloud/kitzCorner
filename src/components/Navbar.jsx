@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import Logo from "../assets/app_icon_kitzcorner.png";
 
 const Navbar = () => {
   const [active, setActive] = useState("Home");
@@ -36,7 +37,17 @@ const Navbar = () => {
   return (
     <nav className="w-full bg-gray-900 text-white p-4 shadow-lg fixed top-0 z-50">
       <div className="max-w-6xl mx-auto flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-wide">SB</h1>
+        <div className="relative flex items-center justify-center space-x-4">
+          <div className="absolute -inset-1 rounded-full blur-md bg-blue-500/30"></div>
+          <img
+            src={Logo}
+            alt="Kitzcorner"
+            className="relative h-16 w-16 object-contain drop-shadow-lg"
+          />
+           <p className="text-gray-200 text-xl font-extrabold font-serif">
+                  KitzCorner
+                </p>
+        </div>
 
         {/* Desktop Navigation */}
         <ul className="hidden md:flex space-x-6">
