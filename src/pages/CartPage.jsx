@@ -217,6 +217,10 @@ const CartPage = () => {
         productDetails: cartItems,
         totalAmount: calculateTotal(),
         orderPlaced: true,
+        orderPlacedAt: new Date(),
+        orderDelivered: false,
+        paymentStatus: "Pending",
+        orderStatus: "Pending",
       };
 
       await addDoc(ordersCollection, orderData);
