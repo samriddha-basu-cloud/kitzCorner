@@ -9,11 +9,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { motion } from "framer-motion";
 import { Package, Clock, Package2, Truck, HomeIcon, XCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import Payments from "./Payments"; // Import the Payments component
 
 const Orders = ({ customerId }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -63,6 +65,28 @@ const Orders = ({ customerId }) => {
       toast.error("Failed to cancel order");
     } finally {
       setCancelLoading(false);
+    }
+  };
+
+  const handlePaymentDone = async (orderId) => {
+    try {
+      const orderRef = doc(db, "orders", orderId);
+      await updateDoc(orderRef, {
+        paymentStatus: "Pending",
+      });
+
+      // Update local state
+      setOrders(orders.map(order =>
+        order.id === orderId
+          ? { ...order, paymentStatus: "Pending" }
+          : order
+      ));
+
+      toast.success("Payment status updated to Pending");
+      setSelectedOrder(null); // Close the modal
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      toast.error("Failed to update payment status");
     }
   };
 
@@ -207,7 +231,7 @@ const Orders = ({ customerId }) => {
                           {/* Payment Button */}
                           <Button
                             disabled={order.paymentStatus === "Pending" || order.orderStatus === "Cancelled" || order.paymentStatus === "Success" || order.paymentStatus === "Failed"}
-                            onClick={() => order.paymentStatus === "Waiting" && navigate("/Payments")}
+                            onClick={() => setSelectedOrder(order)}
                             className={`flex-1 sm:flex-none px-8 py-4 text-base font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
                               order.paymentStatus === "Pending" || order.orderStatus === "Cancelled"
                                 ? "bg-gray-700 text-gray-400 cursor-not-allowed opacity-70"
@@ -308,6 +332,15 @@ const Orders = ({ customerId }) => {
             </motion.div>
           )}
         </>
+      )}
+      {selectedOrder && (
+        <Payments
+          productDetails={selectedOrder.productDetails}
+          totalAmount={selectedOrder.totalAmount}
+          paymentQr={selectedOrder.paymentQr}
+          onClose={() => setSelectedOrder(null)}
+          onPaymentDone={() => handlePaymentDone(selectedOrder.id)}
+        />
       )}
     </div>
   );
