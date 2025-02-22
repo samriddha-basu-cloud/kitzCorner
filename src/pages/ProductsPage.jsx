@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, deleteDoc, query, where } from "firebase/firestore";
 import { db } from "../firebase/config";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
@@ -34,22 +34,22 @@ const CategoryToggle = ({ categories, activeCategory, setActiveCategory }) => {
 const AvailabilityToggle = ({ showOnlyInStock, setShowOnlyInStock }) => {
   return (
     <div className="flex justify-center mb-6 md:mb-8">
-      <div 
+      <div
         onClick={() => setShowOnlyInStock(!showOnlyInStock)}
         className="flex items-center bg-gray-800/30 px-3 md:px-4 py-1.5 md:py-2 rounded-full shadow-[inset_-4px_-4px_8px_rgba(255,255,255,0.1),_inset_4px_4px_8px_rgba(0,0,0,0.4)] cursor-pointer"
       >
         <span className="text-gray-300 text-xs md:text-sm mr-2 md:mr-3">Show only in stock</span>
-        <div 
+        <div
           className={`relative w-10 md:w-12 h-5 md:h-6 rounded-full transition-all duration-300 ${
             showOnlyInStock ? "bg-blue-500/30" : "bg-gray-700/50"
           }`}
         >
-          <motion.div 
+          <motion.div
             animate={{ x: showOnlyInStock ? 20 : 2 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
             className={`absolute top-1 w-3 md:w-4 h-3 md:h-4 rounded-full shadow-md ${
-              showOnlyInStock 
-                ? "bg-blue-400" 
+              showOnlyInStock
+                ? "bg-blue-400"
                 : "bg-gray-400"
             }`}
           />
@@ -61,7 +61,7 @@ const AvailabilityToggle = ({ showOnlyInStock, setShowOnlyInStock }) => {
 
 const StarRating = ({ rating }) => {
   const numRating = Number(rating) || 0;
-  
+
   return (
     <div className="flex">
       {[...Array(5)].map((_, i) => (
@@ -75,16 +75,40 @@ const StarRating = ({ rating }) => {
   );
 };
 
-const ProductCard = ({ product, index }) => {
+const ProductCard = ({ product, index, wishlist, setWishlist }) => {
   const navigate = useNavigate();
   const discountedPrice = (
     product.price -
     (product.price * product.discount) / 100
   ).toFixed(2);
-  
-  const averageRating = product.reviews 
+
+  const averageRating = product.reviews
     ? product.reviews.reduce((acc, review) => acc + Number(review.rating), 0) / product.reviews.length
     : 0;
+
+  const isWishlisted = wishlist.some((item) => item.productId === product.id);
+
+  const handleWishlist = async () => {
+    const customerId = localStorage.getItem("customerId");
+    const customerDoc = await getDoc(doc(db, "customers", customerId));
+    const customerName = customerDoc.data().name;
+
+    if (isWishlisted) {
+      // Remove from wishlist
+      const wishlistItem = wishlist.find((item) => item.productId === product.id);
+      await deleteDoc(doc(db, "wishlist", wishlistItem.id));
+      setWishlist(wishlist.filter((item) => item.productId !== product.id));
+    } else {
+      // Add to wishlist
+      await addDoc(collection(db, "wishlist"), {
+        customerId,
+        customerName,
+        productId: product.id,
+        productDetails: product,
+      });
+      setWishlist([...wishlist, { customerId, customerName, productId: product.id, productDetails: product }]);
+    }
+  };
 
   return (
     <motion.div
@@ -99,7 +123,7 @@ const ProductCard = ({ product, index }) => {
           {product.discount}% OFF
         </div>
       )}
-      
+
       <div className="aspect-square overflow-hidden rounded-t-2xl md:rounded-t-3xl">
         <motion.img
           whileHover={{ scale: 1.05 }}
@@ -123,7 +147,6 @@ const ProductCard = ({ product, index }) => {
           </div>
         </div>
 
-        
         <div className="flex justify-between items-center mt-1 md:mt-3">
           {product.reviews && product.reviews.length > 0 ? (
             <div className="flex items-center">
@@ -134,11 +157,11 @@ const ProductCard = ({ product, index }) => {
             <span className="text-gray-500 text-xs">No reviews</span>
           )}
         </div>
-        
+
         {product.availability !== undefined && (
           <div className={`mt-1 md:mt-2 inline-flex items-center text-xs font-medium ${
-            product.availability 
-              ? "text-green-400" 
+            product.availability
+              ? "text-green-400"
               : "text-red-400"
           }`}>
             <span className={`inline-block w-1.5 h-1.5 md:w-2 md:h-2 rounded-full mr-1 md:mr-1.5 ${
@@ -147,7 +170,7 @@ const ProductCard = ({ product, index }) => {
             {product.availability ? "In Stock" : "Out of Stock"}
           </div>
         )}
-        
+
         <div className="flex gap-1 md:gap-2 mt-2 md:mt-4">
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -158,9 +181,12 @@ const ProductCard = ({ product, index }) => {
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.95 }}
-            className="p-1 md:p-2 bg-gray-700/50 backdrop-blur-sm border border-gray-600/30 text-gray-300 rounded-lg md:rounded-xl text-xs md:text-sm font-medium transition-all duration-300 hover:bg-gray-600/50"
+            onClick={handleWishlist}
+            className={`p-1 md:p-2 bg-gray-700/50 backdrop-blur-sm border border-gray-600/30 text-gray-300 rounded-lg md:rounded-xl text-xs md:text-sm font-medium transition-all duration-300 hover:bg-gray-600/50 ${
+              isWishlisted ? "text-red-500" : ""
+            }`}
           >
-            <Heart size={16} />
+            <Heart size={16} fill={isWishlisted ? "red" : "none"} />
           </motion.button>
         </div>
       </div>
@@ -170,12 +196,12 @@ const ProductCard = ({ product, index }) => {
 
 const SearchBar = ({ onSearch, onClear }) => {
   const [query, setQuery] = useState("");
-  
+
   const handleSearch = (e) => {
     e.preventDefault();
     onSearch(query);
   };
-  
+
   const handleChange = (e) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
@@ -183,7 +209,7 @@ const SearchBar = ({ onSearch, onClear }) => {
       onClear();
     }
   };
-  
+
   return (
     <form onSubmit={handleSearch} className="mb-6 md:mb-10 max-w-md mx-auto">
       <div className="relative">
@@ -213,6 +239,56 @@ const ProductsPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showOnlyInStock, setShowOnlyInStock] = useState(false);
+  const [wishlist, setWishlist] = useState([]);
+  const [customerId, setCustomerId] = useState(null);
+  const [ setCustomerName] = useState("");
+
+  useEffect(() => {
+    const fetchCustomerId = () => {
+      const id = localStorage.getItem("customerId");
+      setCustomerId(id);
+    };
+
+    fetchCustomerId();
+  }, []);
+
+  useEffect(() => {
+    if (customerId) {
+      const fetchCustomerName = async () => {
+        try {
+          const customerDoc = await getDoc(doc(db, "customers", customerId));
+          if (customerDoc.exists()) {
+            setCustomerName(customerDoc.data().name);
+          }
+        } catch (error) {
+          console.error("Error fetching customer name:", error);
+        }
+      };
+
+      fetchCustomerName();
+    }
+  }, [customerId]);
+
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      if (customerId) {
+        try {
+          const wishlistCollection = collection(db, "wishlist");
+          const wishlistQuery = query(wishlistCollection, where("customerId", "==", customerId));
+          const wishlistSnapshot = await getDocs(wishlistQuery);
+          const wishlistData = wishlistSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setWishlist(wishlistData);
+        } catch (error) {
+          console.error("Error fetching wishlist:", error);
+        }
+      }
+    };
+
+    fetchWishlist();
+  }, [customerId]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -246,7 +322,7 @@ const ProductsPage = () => {
     .filter(product => activeCategory === "All" || product.category === activeCategory)
     .filter(product => {
       if (!searchQuery) return true;
-      
+
       const search = searchQuery.toLowerCase();
       return (
         (product.title?.toLowerCase().includes(search) || product.name?.toLowerCase().includes(search)) ||
@@ -292,8 +368,8 @@ const ProductsPage = () => {
           </motion.p>
 
           <SearchBar onSearch={setSearchQuery} onClear={handleClearSearch} />
-          
-          <AvailabilityToggle 
+
+          <AvailabilityToggle
             showOnlyInStock={showOnlyInStock}
             setShowOnlyInStock={setShowOnlyInStock}
           />
@@ -314,8 +390,8 @@ const ProductsPage = () => {
               />
 
               {filteredProducts.length === 0 ? (
-                <motion.div 
-                  initial={{ opacity: 0 }} 
+                <motion.div
+                  initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="text-center py-12 md:py-16"
                 >
@@ -337,6 +413,8 @@ const ProductsPage = () => {
                         key={product.id}
                         product={product}
                         index={index}
+                        wishlist={wishlist}
+                        setWishlist={setWishlist}
                       />
                     ))}
                   </motion.div>
@@ -389,6 +467,8 @@ ProductCard.propTypes = {
     ),
   }).isRequired,
   index: PropTypes.number.isRequired,
+  wishlist: PropTypes.array.isRequired,
+  setWishlist: PropTypes.func.isRequired,
 };
 
 export default ProductsPage;

@@ -8,7 +8,7 @@ import Logo from "../assets/app_icon_kitzcorner.png";
 const Navbar = () => {
   const [active, setActive] = useState("Home");
   const [isOpen, setIsOpen] = useState(false);
-  const navItems = ["Home", "Products", "Cart"];
+  const navItems = ["Home", "Products", "Cart", "Profile"];
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

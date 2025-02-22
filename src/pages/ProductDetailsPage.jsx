@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, setDoc, arrayUnion, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, deleteDoc, addDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import Navbar from "../components/Navbar";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -9,7 +9,7 @@ import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import "swiper/css/autoplay";
-import { ShoppingCart, Clock, Star, Info, CheckCircle, XCircle } from "lucide-react";
+import { ShoppingCart, Clock, Star, Info, CheckCircle, XCircle, PlusCircle, MinusCircle, Heart } from "lucide-react";
 
 const ProductDetailsPage = () => {
   const { productId } = useParams();
@@ -18,9 +18,10 @@ const ProductDetailsPage = () => {
   const [customerName, setCustomerName] = useState("");
   const [addingToCart, setAddingToCart] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [isWishlisted, setIsWishlisted] = useState(false);
   const swiperRef = useRef(null);
   const navigate = useNavigate();
-
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -53,8 +54,22 @@ const ProductDetailsPage = () => {
       }
     };
 
+    const checkWishlist = async () => {
+      const customerId = localStorage.getItem("customerId");
+      if (customerId) {
+        const wishlistCollection = collection(db, "wishlist");
+        const q = query(wishlistCollection, where("customerId", "==", customerId), where("productId", "==", productId));
+        const wishlistSnapshot = await getDocs(q);
+
+        if (!wishlistSnapshot.empty) {
+          setIsWishlisted(true);
+        }
+      }
+    };
+
     fetchProduct();
     fetchCustomerName();
+    checkWishlist();
   }, [productId]);
 
   const addToCart = async () => {
@@ -77,7 +92,7 @@ const ProductDetailsPage = () => {
         image: product.images[0],
         name: product.name,
         price: product.price,
-        quantity: 1,
+        quantity: quantity,
       };
 
       if (!cartQuerySnapshot.empty) {
@@ -85,12 +100,26 @@ const ProductDetailsPage = () => {
         const cartDocRef = doc(db, "cart", cartQuerySnapshot.docs[0].id);
         const cartDocData = cartQuerySnapshot.docs[0].data();
 
-        const updatedTotalAmount = (
-          parseFloat(cartDocData.totalAmount) + parseFloat(discountedPrice)
+        const existingProductIndex = cartDocData.productDetails.findIndex(
+          (item) => item.productId === product.id
+        );
+
+        let updatedProductDetails = [...cartDocData.productDetails];
+        if (existingProductIndex !== -1) {
+          // If product exists, update its quantity
+          updatedProductDetails[existingProductIndex].quantity += quantity;
+        } else {
+          // If product does not exist, add it
+          updatedProductDetails.push(productDetails);
+        }
+
+        const updatedTotalAmount = updatedProductDetails.reduce(
+          (total, item) => total + (item.price - (item.price * item.discount) / 100) * item.quantity,
+          0
         ).toFixed(2);
 
         await updateDoc(cartDocRef, {
-          productDetails: arrayUnion(productDetails),
+          productDetails: updatedProductDetails,
           totalAmount: updatedTotalAmount,
         });
       } else {
@@ -103,7 +132,7 @@ const ProductDetailsPage = () => {
           orderPlaced: false,
         });
       }
-      
+
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2000);
     } catch (error) {
@@ -113,7 +142,84 @@ const ProductDetailsPage = () => {
     }
   };
 
-  // Calculate average rating
+  const updateQuantity = async (action) => {
+    const customerId = localStorage.getItem("customerId");
+    if (!customerId || !product) {
+      console.error("Customer ID or product data not found");
+      return;
+    }
+
+    try {
+      const cartCollectionRef = collection(db, "cart");
+      const cartQuery = query(cartCollectionRef, where("customerId", "==", customerId));
+      const cartQuerySnapshot = await getDocs(cartQuery);
+
+      if (!cartQuerySnapshot.empty) {
+        const cartDocRef = doc(db, "cart", cartQuerySnapshot.docs[0].id);
+        const cartDocData = cartQuerySnapshot.docs[0].data();
+
+        const existingProductIndex = cartDocData.productDetails.findIndex(
+          (item) => item.productId === product.id
+        );
+
+        if (existingProductIndex !== -1) {
+          let updatedProductDetails = [...cartDocData.productDetails];
+          if (action === "increase") {
+            updatedProductDetails[existingProductIndex].quantity += 1;
+          } else if (action === "decrease" && updatedProductDetails[existingProductIndex].quantity > 1) {
+            updatedProductDetails[existingProductIndex].quantity -= 1;
+          }
+
+          const updatedTotalAmount = updatedProductDetails.reduce(
+            (total, item) => total + (item.price - (item.price * item.discount) / 100) * item.quantity,
+            0
+          ).toFixed(2);
+
+          await updateDoc(cartDocRef, {
+            productDetails: updatedProductDetails,
+            totalAmount: updatedTotalAmount,
+          });
+
+          setQuantity(updatedProductDetails[existingProductIndex].quantity);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+    }
+  };
+
+  const toggleWishlist = async () => {
+    const customerId = localStorage.getItem("customerId");
+    if (!customerId || !product) {
+      console.error("Customer ID or product data not found");
+      return;
+    }
+
+    try {
+      const wishlistCollection = collection(db, "wishlist");
+      const q = query(wishlistCollection, where("customerId", "==", customerId), where("productId", "==", productId));
+      const wishlistSnapshot = await getDocs(q);
+
+      if (!wishlistSnapshot.empty) {
+        // Remove from wishlist
+        const docId = wishlistSnapshot.docs[0].id;
+        await deleteDoc(doc(db, "wishlist", docId));
+        setIsWishlisted(false);
+      } else {
+        // Add to wishlist
+        await addDoc(collection(db, "wishlist"), {
+          customerId: customerId,
+          customerName: customerName,
+          productId: product.id,
+          productDetails: product,
+        });
+        setIsWishlisted(true);
+      }
+    } catch (error) {
+      console.error("Error toggling wishlist:", error);
+    }
+  };
+
   const calculateAverageRating = (reviews) => {
     if (!reviews || reviews.length === 0) return 0;
     const sum = reviews.reduce((total, review) => total + Number(review.rating), 0);
@@ -146,7 +252,7 @@ const ProductDetailsPage = () => {
     product.price -
     (product.price * product.discount) / 100
   ).toFixed(2);
-  
+
   const averageRating = calculateAverageRating(product.reviews || []);
 
   return (
@@ -155,16 +261,15 @@ const ProductDetailsPage = () => {
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-850 to-gray-800 pt-28 px-4 sm:px-6 lg:px-8 pb-16">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumbs */}
-           {/* Breadcrumbs */}
           <div className="text-sm text-gray-400 mb-6 flex items-center">
-            <span 
+            <span
               className="hover:text-blue-400 transition-colors cursor-pointer"
               onClick={() => navigate('/Home')}
             >
               Home
             </span>
             <span className="mx-2">➤</span>
-            <span 
+            <span
               className="hover:text-blue-400 transition-colors cursor-pointer"
               onClick={() => navigate('/Products')}
             >
@@ -182,7 +287,7 @@ const ProductDetailsPage = () => {
               <div className="lg:w-3/5 relative bg-gradient-to-br from-gray-800/50 to-gray-900/70">
                 <div className="p-6 lg:p-8">
                   <Swiper
-                    pagination={{ 
+                    pagination={{
                       dynamicBullets: true,
                       clickable: true
                     }}
@@ -212,7 +317,7 @@ const ProductDetailsPage = () => {
                       </SwiperSlide>
                     ))}
                   </Swiper>
-                  
+
                   <div className="swiper-button-next !w-12 !h-12 !flex items-center justify-center rounded-full backdrop-blur-md text-white shadow-lg !after:content-[''] top-1/2 -right-6 lg:right-4 transition-colors">
                   </div>
                   <div className="swiper-button-prev !w-12 !h-12 !flex items-center justify-center rounded-full backdrop-blur-md text-white shadow-lg !after:content-[''] top-1/2 -left-6 lg:left-4 transition-colors">
@@ -252,9 +357,9 @@ const ProductDetailsPage = () => {
                   <div className="flex items-center mt-1 mb-6">
                     <div className="flex text-yellow-400">
                       {[...Array(5)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          className={`w-4 h-4 ${i < Math.round(averageRating) ? 'fill-yellow-400' : ''}`} 
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${i < Math.round(averageRating) ? 'fill-yellow-400' : ''}`}
                         />
                       ))}
                     </div>
@@ -316,14 +421,31 @@ const ProductDetailsPage = () => {
                   {/* Add to Cart Button - Push to bottom with mt-auto */}
                   <div className="mt-auto">
                     <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={() => updateQuantity("decrease")}
+                          disabled={addingToCart || !product.availability || quantity <= 1}
+                          className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-700/50 text-white border border-gray-600/50 hover:bg-gray-700 transition-colors"
+                        >
+                          <MinusCircle className="w-5 h-5" />
+                        </button>
+                        <span className="text-lg font-medium text-white">{quantity}</span>
+                        <button
+                          onClick={() => updateQuantity("increase")}
+                          disabled={addingToCart || !product.availability}
+                          className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-700/50 text-white border border-gray-600/50 hover:bg-gray-700 transition-colors"
+                        >
+                          <PlusCircle className="w-5 h-5" />
+                        </button>
+                      </div>
                       <button
                         onClick={addToCart}
                         disabled={addingToCart || !product.availability}
                         className={`flex-1 px-6 py-4 flex items-center justify-center rounded-xl text-lg font-medium transition-all relative overflow-hidden group ${
-                          !product.availability 
-                            ? "bg-gray-600 cursor-not-allowed" 
-                            : addedToCart 
-                              ? "bg-green-500 text-white" 
+                          !product.availability
+                            ? "bg-gray-600 cursor-not-allowed"
+                            : addedToCart
+                              ? "bg-green-500 text-white"
                               : "bg-blue-600 hover:bg-blue-700 text-white shadow-[0_4px_20px_rgba(59,130,246,0.5)]"
                         }`}
                       >
@@ -349,11 +471,13 @@ const ProductDetailsPage = () => {
                           </div>
                         )}
                       </button>
-                      
-                      <button className="sm:w-16 h-14 flex items-center justify-center rounded-xl bg-gray-700/50 text-white border border-gray-600/50 hover:bg-gray-700 transition-colors">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-200">
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                        </svg>
+                      <button
+                        onClick={toggleWishlist}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full text-white border border-gray-600/50 hover:bg-gray-700 transition-colors ${
+                          isWishlisted ? "text-red-500" : ""
+                        }`}
+                      >
+                        <Heart className="w-5 h-5" fill={isWishlisted ? "red" : "none"} />
                       </button>
                     </div>
                   </div>
@@ -361,7 +485,7 @@ const ProductDetailsPage = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Reviews Section */}
           <div className="mt-12 bg-gray-800/30 rounded-3xl overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.2),_0_-1px_8px_rgba(255,255,255,0.05)]">
             <div className="p-6 sm:p-8">
@@ -369,7 +493,7 @@ const ProductDetailsPage = () => {
                 <Star className="w-6 h-6 mr-2 text-yellow-400 fill-yellow-400" />
                 Customer Reviews
               </h3>
-              
+
               {product.reviews && product.reviews.length > 0 ? (
                 <div className="space-y-6">
                   {/* Reviews summary */}
@@ -378,20 +502,20 @@ const ProductDetailsPage = () => {
                       <div className="text-5xl font-bold text-white mb-2">{averageRating}</div>
                       <div className="flex text-yellow-400 mb-3">
                         {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`w-5 h-5 ${i < Math.round(averageRating) ? 'fill-yellow-400' : ''}`} 
+                          <Star
+                            key={i}
+                            className={`w-5 h-5 ${i < Math.round(averageRating) ? 'fill-yellow-400' : ''}`}
                           />
                         ))}
                       </div>
                       <p className="text-gray-400 text-sm">Based on {product.reviews.length} reviews</p>
                     </div>
-                    
+
                     <div className="md:w-2/3 flex flex-col justify-center">
                       {[5, 4, 3, 2, 1].map((rating) => {
                         const count = product.reviews.filter(r => Number(r.rating) === rating).length;
                         const percentage = product.reviews.length ? (count / product.reviews.length) * 100 : 0;
-                        
+
                         return (
                           <div key={rating} className="flex items-center mb-2">
                             <div className="flex items-center w-16">
@@ -399,8 +523,8 @@ const ProductDetailsPage = () => {
                               <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                             </div>
                             <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden mx-2">
-                              <div 
-                                className="h-full bg-yellow-400 rounded-full" 
+                              <div
+                                className="h-full bg-yellow-400 rounded-full"
                                 style={{ width: `${percentage}%` }}
                               ></div>
                             </div>
@@ -410,7 +534,7 @@ const ProductDetailsPage = () => {
                       })}
                     </div>
                   </div>
-                  
+
                   {/* Individual reviews */}
                   <div className="space-y-6">
                     {product.reviews.map((review, index) => (
@@ -423,9 +547,9 @@ const ProductDetailsPage = () => {
                             <h4 className="text-white font-medium">Customer : {index+1}</h4>
                             <div className="flex text-yellow-400 mt-1">
                               {[...Array(5)].map((_, i) => (
-                                <Star 
-                                  key={i} 
-                                  className={`w-4 h-4 ${i < Number(review.rating) ? 'fill-yellow-400' : ''}`} 
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${i < Number(review.rating) ? 'fill-yellow-400' : ''}`}
                                 />
                               ))}
                             </div>
@@ -452,7 +576,7 @@ const ProductDetailsPage = () => {
               )}
             </div>
           </div>
-          
+
           {/* Additional product details section */}
           <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-gray-800/30 p-6 rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.2),_0_-1px_4px_rgba(255,255,255,0.05)]">
@@ -466,7 +590,7 @@ const ProductDetailsPage = () => {
               </div>
               <p className="text-gray-400 text-sm">All transactions are secure and encrypted for your protection.</p>
             </div>
-            
+
             <div className="bg-gray-800/30 p-6 rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.2),_0_-1px_4px_rgba(255,255,255,0.05)]">
               <div className="flex items-center mb-4">
                 <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
@@ -479,7 +603,7 @@ const ProductDetailsPage = () => {
               </div>
               <p className="text-gray-400 text-sm">Quick shipping and delivery. Track your package in real-time.</p>
             </div>
-            
+
             <div className="bg-gray-800/30 p-6 rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.2),_0_-1px_4px_rgba(255,255,255,0.05)]">
               <div className="flex items-center mb-4">
                 <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center mr-3">

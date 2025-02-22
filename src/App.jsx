@@ -10,6 +10,7 @@ import Footer from '../src/components/Footer';
 import ProductsPage from "./pages/ProductsPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import CartPage from "./pages/CartPage";
+import ProfilePage from './pages/ProfilePage';
 import Navbar from './components/Navbar'; // Import the Navbar component
 
 // Loading Spinner Component
@@ -138,6 +139,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <CartPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />

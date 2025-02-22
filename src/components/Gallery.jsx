@@ -27,12 +27,26 @@ export const Gallery = () => {
     });
 
     // GSAP animation for the pictures
-    gsap.to(".gallery-item", {
-      opacity: 1,
-      y: 50,
-      duration: 1,
-      ease: "power2.out",
-      // stagger: 0.2,
+    gsap.fromTo(
+      ".gallery-item",
+      { opacity: 0, y: 50 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        ease: "power2.out",
+        stagger: 0.2,
+      }
+    );
+
+    // GSAP hover animation for the pictures
+    gsap.utils.toArray(".gallery-item").forEach((item) => {
+      item.addEventListener("mouseenter", () => {
+        gsap.to(item, { scale: 1.05, duration: 0.5, ease: "power2.inOut" });
+      });
+      item.addEventListener("mouseleave", () => {
+        gsap.to(item, { scale: 1, duration: 0.5, ease: "power2.inOut" });
+      });
     });
   }, []);
 
@@ -52,11 +66,11 @@ export const Gallery = () => {
           </h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-6">
           {images.map((src, index) => (
             <div
               key={index}
-              className="relative overflow-hidden rounded-xl break-inside-avoid gallery-item"
+              className="relative overflow-hidden rounded-xl break-inside-avoid gallery-item neomorphic"
               style={{ gridRowEnd: `span ${Math.ceil(Math.random() * 3)}` }}
             >
               <img
@@ -68,6 +82,20 @@ export const Gallery = () => {
           ))}
         </div>
       </div>
+
+      {/* Custom CSS for Neomorphic Design with updated shadows */}
+      <style>{`
+        .neomorphic {
+          background: #1e293b; /* Matching slate-900 background */
+          border-radius: 15px;
+          box-shadow: 20px 20px 60px #171e2e, -20px -20px 60px #253448; /* Darker and lighter variants of the background */
+          transition: transform 0.3s ease-in-out;
+        }
+
+        .neomorphic:hover {
+          transform: scale(1.05);
+        }
+      `}</style>
     </div>
   );
 };

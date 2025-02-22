@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, query, where, getDocs, doc, updateDoc, arrayRemove } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, arrayRemove, addDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import Navbar from "../components/Navbar";
 import PropTypes from "prop-types";
@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import Orders from "../components/Orders"; // Import the Orders component
 
 const CartItem = ({ item, index, updateQuantity, showDialog }) => {
   const discountedPrice = (
@@ -47,7 +48,7 @@ const CartItem = ({ item, index, updateQuantity, showDialog }) => {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex flex-col">
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-1">{item.name}</h3>
                 <div className="flex items-center space-x-2">
@@ -62,8 +63,8 @@ const CartItem = ({ item, index, updateQuantity, showDialog }) => {
             {/* Quantity Controls */}
             <div className="flex items-center space-x-1 sm:space-x-3 mt-4 sm:mt-0">
               <div className="flex items-center bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   onClick={() => handleQuantityChange(-1)}
                   className="h-8 w-8 rounded-none text-gray-400 hover:text-white hover:bg-gray-700"
@@ -73,8 +74,8 @@ const CartItem = ({ item, index, updateQuantity, showDialog }) => {
                 <span className="w-10 text-center text-white font-medium">
                   {item.quantity}
                 </span>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   onClick={() => handleQuantityChange(1)}
                   className="h-8 w-8 rounded-none text-gray-400 hover:text-white hover:bg-gray-700"
@@ -92,7 +93,7 @@ const CartItem = ({ item, index, updateQuantity, showDialog }) => {
               </Button>
             </div>
           </div>
-          
+
           {/* Item Total */}
           <div className="bg-gray-800/50 py-2 px-4 lg:px-6 flex justify-between items-center">
             <span className="text-sm text-gray-400">Item total:</span>
@@ -110,6 +111,7 @@ const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState({ visible: false, productId: null });
+  const [showOrders, setShowOrders] = useState(false);
   const customerId = localStorage.getItem("customerId");
   const navigate = useNavigate();
 
@@ -207,6 +209,36 @@ const CartPage = () => {
 
   const itemCount = cartItems.reduce((count, item) => count + item.quantity, 0);
 
+  const placeOrder = async () => {
+    try {
+      const ordersCollection = collection(db, "orders");
+      const orderData = {
+        customerId,
+        productDetails: cartItems,
+        totalAmount: calculateTotal(),
+        orderPlaced: true,
+      };
+
+      await addDoc(ordersCollection, orderData);
+
+      const cartCollection = collection(db, "cart");
+      const q = query(cartCollection, where("customerId", "==", customerId));
+      const cartSnapshot = await getDocs(q);
+
+      if (!cartSnapshot.empty) {
+        const cartDocRef = doc(db, "cart", cartSnapshot.docs[0].id);
+        await updateDoc(cartDocRef, {
+          productDetails: [],
+        });
+      }
+
+      setCartItems([]);
+      setShowOrders(true);
+    } catch (error) {
+      console.error("Error placing order:", error);
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -216,105 +248,111 @@ const CartPage = () => {
           animate={{ opacity: 1 }}
           className="max-w-5xl mx-auto"
         >
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-bold text-center mb-3 bg-clip-text text-white"
-            style={{
-              textShadow:
-                "0 0 6px #66ccff, 0 0 20px #66ccff, 0 0 30px #66ccff, 0 0 40px #0099ff, 0 0 70px #0099ff",
-            }}
-          >
-            Your Cart
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-gray-400 text-center text-lg md:text-xl mb-12 max-w-2xl mx-auto"
-          >
-            {cartItems.length > 0 
-              ? `You have ${itemCount} ${itemCount === 1 ? 'item' : 'items'} in your cart`
-              : "Your cart is empty"}
-          </motion.p>
-
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-400"></div>
-            </div>
-          ) : (
+          {!showOrders ? (
             <>
-              <AnimatePresence mode="wait">
-                {cartItems.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-6">
-                    {cartItems.map((item, index) => (
-                      <CartItem
-                        key={item.productId}
-                        item={item}
-                        index={index}
-                        updateQuantity={updateQuantity}
-                        showDialog={showDialog}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex flex-col items-center justify-center h-64 text-center"
-                  >
-                    <div className="text-gray-500 text-6xl mb-4">🛒</div>
-                    <p className="text-gray-400 mb-6">Your cart is currently empty</p>
-                    <Button
-                      onClick={() => navigate("/")}
-                      className="bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-400 hover:bg-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.5)]"
-                    >
-                      Continue Shopping
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <motion.h1
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-4xl md:text-5xl font-bold text-center mb-3 bg-clip-text text-white"
+                style={{
+                  textShadow:
+                    "0 0 6px #66ccff, 0 0 20px #66ccff, 0 0 30px #66ccff, 0 0 40px #0099ff, 0 0 70px #0099ff",
+                }}
+              >
+                Your Cart
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-gray-400 text-center text-lg md:text-xl mb-12 max-w-2xl mx-auto"
+              >
+                {cartItems.length > 0
+                  ? `You have ${itemCount} ${itemCount === 1 ? 'item' : 'items'} in your cart`
+                  : "Your cart is empty"}
+              </motion.p>
 
-              {cartItems.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="mt-12 lg:mt-16"
-                >
-                  <Card className="bg-gray-900 border-gray-700 overflow-hidden shadow-[0_4px_24px_rgba(0,136,255,0.15)]">
-                    <CardContent className="p-6">
-                      <div className="space-y-4">
-                        <div className="flex justify-between border-b border-gray-700 pb-4">
-                          <span className="text-gray-400">Subtotal</span>
-                          <span className="text-white font-medium">₹{calculateTotal()}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-gray-700 pb-4">
-                          <span className="text-gray-400">Shipping</span>
-                          <span className="text-white font-medium">Free</span>
-                        </div>
-                        <div className="flex justify-between pt-2">
-                          <span className="text-lg font-bold text-white">Total</span>
-                          <div className="text-right">
-                            <div className="text-xl font-bold text-blue-400">₹{calculateTotal()}</div>
-                            <div className="text-xs text-gray-400">Including taxes</div>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-8 flex justify-end">
-                          <Button
-                            onClick={() => navigate("/finalplacement")}
-                            className="w-full sm:w-auto bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-400 rounded-xl text-sm font-medium hover:bg-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.5)] py-6"
-                          >
-                            <span className="px-4">Proceed to Checkout</span>
-                          </Button>
-                        </div>
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-400"></div>
+                </div>
+              ) : (
+                <>
+                  <AnimatePresence mode="wait">
+                    {cartItems.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-6">
+                        {cartItems.map((item, index) => (
+                          <CartItem
+                            key={item.productId}
+                            item={item}
+                            index={index}
+                            updateQuantity={updateQuantity}
+                            showDialog={showDialog}
+                          />
+                        ))}
                       </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex flex-col items-center justify-center h-64 text-center"
+                      >
+                        <div className="text-gray-500 text-6xl mb-4">🛒</div>
+                        <p className="text-gray-400 mb-6">Your cart is currently empty</p>
+                        <Button
+                          onClick={() => navigate("/Products")}
+                          className="bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-400 hover:bg-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                        >
+                          Continue Shopping
+                        </Button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {cartItems.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="mt-12 lg:mt-16"
+                    >
+                      <Card className="bg-gray-900 border-gray-700 overflow-hidden shadow-[0_4px_24px_rgba(0,136,255,0.15)]">
+                        <CardContent className="p-6">
+                          <div className="space-y-4">
+                            <div className="flex justify-between border-b border-gray-700 pb-4">
+                              <span className="text-gray-400">Subtotal</span>
+                              <span className="text-white font-medium">₹{calculateTotal()}</span>
+                            </div>
+                            <div className="flex justify-between border-b border-gray-700 pb-4">
+                              <span className="text-gray-400">Shipping</span>
+                              <span className="text-white font-medium">Free</span>
+                            </div>
+                            <div className="flex justify-between pt-2">
+                              <span className="text-lg font-bold text-white">Total</span>
+                              <div className="text-right">
+                                <div className="text-xl font-bold text-blue-400">₹{calculateTotal()}</div>
+                                <div className="text-xs text-gray-400">Including taxes</div>
+                              </div>
+                            </div>
+
+                            <div className="mt-8 flex justify-end">
+                              <Button
+                                onClick={placeOrder}
+                                className="w-full sm:w-auto bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-400 rounded-xl text-sm font-medium hover:bg-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.5)] py-6"
+                              >
+                                <span className="px-4">Place Order</span>
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )}
+                </>
               )}
             </>
+          ) : (
+            <Orders customerId={customerId} />
           )}
         </motion.div>
       </div>
